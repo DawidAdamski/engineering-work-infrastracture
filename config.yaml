@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pg-secrets
+  namespace: data
+type: Opaque
+stringData:
+  POSTGRES_USER: user
+  POSTGRES_PASSWORD: changeme
+  POSTGRES_DB: app_db
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pg-init
+  namespace: data
+data:
+  01_init.sql: |
+    CREATE EXTENSION IF NOT EXISTS vector;
+    CREATE TABLE IF NOT EXISTS items (
+      id SERIAL PRIMARY KEY,
+      title TEXT,
+      embedding VECTOR(768)
+    );

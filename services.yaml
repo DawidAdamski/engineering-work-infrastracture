@@ -1,0 +1,66 @@
+# --- PostgreSQL Services ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: data
+spec:
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-nodeport
+  namespace: data
+spec:
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      nodePort: 30032
+  type: NodePort
+---
+# --- Qdrant (Vector DB) Services ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qdrant
+  namespace: data
+spec:
+  selector:
+    app: qdrant
+  ports:
+    - name: rest
+      port: 6333
+      targetPort: 6333
+    - name: grpc
+      port: 6334
+      targetPort: 6334
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qdrant-nodeport
+  namespace: data
+spec:
+  selector:
+    app: qdrant
+  ports:
+    - name: rest
+      port: 6333
+      targetPort: 6333
+      nodePort: 30033
+    - name: grpc
+      port: 6334
+      targetPort: 6334
+      nodePort: 30034
+  type: NodePort
