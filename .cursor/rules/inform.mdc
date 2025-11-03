@@ -1,0 +1,69 @@
+---
+alwaysApply: true
+---
+
+# Project Overview
+This repository provides the **infrastructure and experimental environment** for the engineering thesis:
+“RFM Analysis Using Artificial Intelligence in a CRM Application Deployed on the Kubernetes Platform.”
+
+Its main purpose is to design, deploy, and test the **cloud-native backend stack** supporting the CRM system — focusing on infrastructure, automation, and measurements related to RFM analysis and AI-based segmentation.  
+The functional CRM API is developed separately (https://github.com/DawidAdamski/engineering-work-crm).
+
+# Scope
+The repository focuses on:
+- Infrastructure provisioning in Kubernetes (Minikube by default).
+- GitOps-based deployment management using ArgoCD.
+- Containerized services setup (PostgreSQL, Qdrant, n8n, CRM API).
+- Secrets, ConfigMaps, and Ingress management.
+- Embedding workflows (PostgreSQL → OpenAI → Qdrant).
+- Running and documenting experiments (e.g., query latency, embedding generation speed).
+- Producing reproducible test environments for thesis validation.
+
+This repo **does not include** CRM business logic — only its backend infrastructure and experimental layer.
+
+# Components
+- **ArgoCD** – GitOps continuous delivery tool managing all application deployments and configurations declaratively.  
+- **PostgreSQL** – stores CRM entities and supports classical RFM (Recency, Frequency, Monetary) calculations.  
+- **Qdrant** – vector database for embeddings and similarity search.  
+- **n8n** – acts as the embedding worker, generating vectors from customer data via OpenAI or compatible API.  
+- **CRM API (external)** – S2I-built service connected via internal DNS (`crm-api.crm-rfm.svc.cluster.local`).  
+- **Kubernetes Resources** – namespace, PVCs, Secrets, ConfigMaps, and Ingress for deployment.
+
+# Expected Behavior
+Cursor should:
+- Generate Kubernetes YAMLs, Helm templates, or test scripts that align with this infrastructure.  
+- Use the existing naming conventions:
+  - Namespace: `crm-rfm` (for applications), `argocd` (for ArgoCD)
+  - PostgreSQL: port `5432`
+  - Qdrant: port `6333`
+  - n8n: port `5678`
+  - CRM API: port `8000`
+  - ArgoCD: port `443` (HTTPS) / `80` (HTTP)
+- Ensure all manifests are **Minikube-compatible** and self-contained.
+- Maintain the tone, format, and style of existing docs (`README.architecture.md`, etc.).
+- Use **English technical documentation** with consistent Markdown and Mermaid syntax.
+- Avoid generating business logic or frontend code — focus on infrastructure, orchestration, testing, and automation.
+
+# Testing and Experimentation Context
+Infrastructure here will be used to:
+- Compare RFM segmentation results between SQL-based and AI-based approaches.
+- Measure latency and throughput differences between PostgreSQL queries and Qdrant similarity searches.
+- Simulate embedding generation workflows at scale.
+- Provide visual and numerical data for thesis analysis (e.g., graphs, timing tables).
+
+# Deployment Flow
+1. Start Minikube and create the namespace `crm-rfm`.
+2. Deploy ArgoCD for GitOps-based deployment management.
+3. Apply ConfigMaps, Secrets, and PVCs.
+4. Deploy PostgreSQL, Qdrant, n8n, and CRM API (S2I-built image) via ArgoCD.
+5. Expose API via Ingress (`crm.local`).
+6. Run tests to validate integration and performance.
+
+# General Rules
+- All code, YAML, and docs must remain **readable, reproducible, and thesis-ready**.  
+- Follow Kubernetes documentation best practices (v1.30+).  
+- For diagrams, use only valid Mermaid syntax (no HTML tags or parentheses).  
+- Focus on clarity, traceability, and deployment correctness.
+
+# Keywords
+Kubernetes, Minikube, ArgoCD, GitOps, CRM, RFM analysis, PostgreSQL, Qdrant, OpenAI, Embeddings, n8n, Source-to-Image, DevOps, AI Infrastructure, Experimentation, Cloud Native.

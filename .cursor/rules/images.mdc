@@ -1,0 +1,186 @@
+---
+alwaysApply: true
+---
+
+# Container Images
+
+This document specifies the **locked container image versions** used in the infrastructure deployment.  
+**All images must use specific version tags — never use `latest` tag in production.**
+
+**Primary Repository:** [Docker Hub](https://hub.docker.com/) — most application images are sourced from Docker Hub.
+
+---
+
+## Application Images
+
+### PostgreSQL Database
+
+| Property | Value |
+|:--|:--|
+| **Image** | `postgres` |
+| **Version** | `18-alpine` |
+| **Description** | Official PostgreSQL 18 database for storing CRM transactional data and classical RFM tables |
+| **Source** | [Docker Hub - postgres](https://hub.docker.com/_/postgres) |
+| **Namespace** | `crm-rfm` |
+| **Port** | `5432` |
+
+**Note:** 
+- Uses the official PostgreSQL image (plain PostgreSQL, no vector extensions).
+- Alpine-based image for minimal footprint.
+- Version `18` is the latest PostgreSQL major version. See [PostgreSQL Docker documentation](https://github.com/docker-library/docs/blob/master/postgres/README.md).
+- Vector similarity search is handled by Qdrant, not PostgreSQL.
+
+---
+
+### Qdrant Vector Database
+
+| Property | Value |
+|:--|:--|
+| **Image** | `qdrant/qdrant` |
+| **Version** | `v1.15.5` |
+| **Description** | Vector database for storing and querying customer embeddings |
+| **Source** | [Docker Hub - qdrant](https://hub.docker.com/r/qdrant/qdrant) |
+| **Namespace** | `crm-rfm` |
+| **Ports** | `6333` (HTTP), `6334` (gRPC) |
+
+**Note:** 
+- Locked to `v1.15.5` for stability (latest according to [Qdrant Helm charts](https://qdrant.to/helm)).
+- Check [Qdrant releases](https://github.com/qdrant/qdrant/releases) and [installation guide](https://qdrant.tech/documentation/guides/installation/) for security updates.
+
+---
+
+### n8n Workflow Automation
+
+| Property | Value |
+|:--|:--|
+| **Image** | `n8nio/n8n` |
+| **Version** | `1.118.1` |
+| **Description** | Workflow automation platform for generating and synchronizing embeddings |
+| **Source** | [Docker Hub - n8n](https://hub.docker.com/r/n8nio/n8n) |
+| **Namespace** | `crm-rfm` |
+| **Port** | `5678` |
+
+**Note:** 
+- Stable version `1.118.1` (latest according to [Docker Hub](https://hub.docker.com/layers/n8nio/n8n/stable/images/sha256-45f1eb4005b8d876824914558c806c1aebba8ab14c14b1d66645b48a8f4ba08c)).
+- Monitor [n8n releases](https://github.com/n8n-io/n8n/releases) for updates.
+
+---
+
+## GitOps & Deployment Management
+
+### ArgoCD Components
+
+All ArgoCD components use version `v3.1.9` for compatibility.
+
+| Component | Image | Version | Description |
+|:--|:--|:--|:--|
+| **ArgoCD Server** | `quay.io/argoproj/argocd` | `v3.1.9` | Main GitOps server UI and API |
+| **ArgoCD Repo Server** | `quay.io/argoproj/argocd-repo-server` | `v3.1.9` | Git repository synchronization |
+| **ArgoCD Application Controller** | `quay.io/argoproj/argocd-applicationset-controller` | `v3.1.9` | ApplicationSet controller |
+| **ArgoCD Dex** | `quay.io/argoproj/argocd-dex-server` | `v3.1.9` | Authentication server |
+| **ArgoCD Redis HA** | `quay.io/argoproj/argocd` | `v3.1.9` (redis-ha) | Redis cache for ArgoCD |
+
+**Source:** [ArgoCD Releases](https://github.com/argoproj/argo-cd/releases)  
+**Namespace:** `argocd`
+
+**Note:** 
+- When installing ArgoCD via official manifests, all components are automatically set to the same version.
+- Latest stable version is `v3.1.9` according to [ArgoCD GitHub releases](https://github.com/argoproj/argo-cd/releases).
+- Verify version compatibility before upgrading.
+
+---
+
+## Application Build Images
+
+### CRM API Base Image (S2I)
+
+| Property | Value |
+|:--|:--|
+| **Image** | `registry.access.redhat.com/ubi10/python-311` |
+| **Version** | `latest` |
+| **Description** | Red Hat Universal Base Image 10 with Python 3.11 for Source-to-Image builds |
+| **Source** | [Red Hat Container Catalog](https://catalog.redhat.com/software/containers/) / [Docker Hub - redhat/ubi10](https://hub.docker.com/r/redhat/ubi10) |
+| **Purpose** | Base image for building CRM API container via S2I |
+
+**Note:** 
+- Uses Red Hat UBI10 (Universal Base Image 10) with Python 3.11.
+- Latest tag should be used or specific version tag checked on [Docker Hub](https://hub.docker.com/r/redhat/ubi10).
+- This image is used in the S2I build process to create the `crm-api` application image.
+- CRM API final image is custom-built and tagged separately.
+
+---
+
+### CRM API Application Image
+
+| Property | Value |
+|:--|:--|
+| **Image** | `crm-api` |
+| **Version** | Custom (built from source) |
+| **Description** | Custom CRM API application built using Source-to-Image (S2I) |
+| **Base Image** | `registry.access.redhat.com/ubi10/python-311:latest` |
+| **Source Repository** | [engineering-work-crm](https://github.com/DawidAdamski/engineering-work-crm) |
+| **Namespace** | `crm-rfm` |
+
+**Note:** 
+- This image is built using S2I from the CRM application source code.
+- Version tagging should follow semantic versioning (e.g., `v1.0.0`, `v1.1.0`).
+- **Never use `latest` tag** — always build and tag with specific versions.
+
+---
+
+## Version Management Rules
+
+1. **Never use `latest` tag** — Always specify exact version numbers.
+2. **Lock all versions** — All images must have explicit version tags in manifests.
+3. **Test before upgrading** — Update versions only after testing in development.
+4. **Document changes** — Update both `README.md` and `images.mdc` when upgrading.
+5. **Monitor security** — Regularly check for security updates from image maintainers.
+6. **Version compatibility** — Ensure all related components (e.g., ArgoCD) use compatible versions.
+
+---
+
+## Image Update Process
+
+When updating image versions:
+
+1. **Research latest stable version** from official sources:
+   - **[Docker Hub](https://hub.docker.com/)** — primary source for most images (check tags page for available versions)
+   - GitHub releases (for version history and changelogs)
+   - Official documentation
+
+2. **Test in development environment**:
+   - Update version in manifests
+   - Deploy and validate functionality
+   - Run integration tests
+
+3. **Update documentation**:
+   - Update `README.md` image list
+   - Update `images.mdc` with new version
+   - Document any breaking changes
+
+4. **Deploy to production**:
+   - Update Kubernetes manifests
+   - Apply changes via ArgoCD (if using GitOps)
+   - Monitor deployment and logs
+
+---
+
+## References
+
+### Docker Hub (Primary Repository)
+
+- **[Docker Hub Homepage](https://hub.docker.com/)** — Main repository for container images
+- **[PostgreSQL on Docker Hub](https://hub.docker.com/_/postgres)** — Official PostgreSQL images
+- **[Qdrant on Docker Hub](https://hub.docker.com/r/qdrant/qdrant)** — Vector database images
+- **[n8n on Docker Hub](https://hub.docker.com/r/n8nio/n8n)** — Workflow automation platform
+
+### Other Repositories
+
+- **[ArgoCD Releases](https://github.com/argoproj/argo-cd/releases)** — ArgoCD images on Quay.io (`quay.io/argoproj/argocd`)
+- **[Red Hat Container Catalog](https://catalog.redhat.com/software/containers/)** — Red Hat UBI and certified images
+
+### Version Verification
+
+- Check Docker Hub tags page for each image to verify latest stable versions
+- Use Docker Hub search to find alternative images if needed
+- Monitor Docker Hub for security advisories and updates
