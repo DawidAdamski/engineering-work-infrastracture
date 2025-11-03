@@ -18,8 +18,8 @@ This document specifies the **locked container image versions** used in the infr
 | Property | Value |
 |:--|:--|
 | **Image** | `postgres` |
-| **Version** | `18-alpine` |
-| **Description** | Official PostgreSQL 18 database for storing CRM transactional data and classical RFM tables |
+| **Version** | `17.6-alpine3.22` |
+| **Description** | Official PostgreSQL 17.6 database for storing CRM transactional data and classical RFM tables |
 | **Source** | [Docker Hub - postgres](https://hub.docker.com/_/postgres) |
 | **Namespace** | `crm-rfm` |
 | **Port** | `5432` |
@@ -27,7 +27,7 @@ This document specifies the **locked container image versions** used in the infr
 **Note:** 
 - Uses the official PostgreSQL image (plain PostgreSQL, no vector extensions).
 - Alpine-based image for minimal footprint.
-- Version `18` is the latest PostgreSQL major version. See [PostgreSQL Docker documentation](https://github.com/docker-library/docs/blob/master/postgres/README.md).
+- Version `17.6-alpine3.22` is a stable PostgreSQL 17 version. See [PostgreSQL Docker documentation](https://github.com/docker-library/docs/blob/master/postgres/README.md).
 - Vector similarity search is handled by Qdrant, not PostgreSQL.
 
 ---

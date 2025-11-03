@@ -1,5 +1,4 @@
 # Infrastructure for Engineering Thesis  
-### *“RFM Analysis Using Artificial Intelligence in a CRM Application Deployed on the Kubernetes Platform”*
 
 This repository contains **only the infrastructure configuration and deployment manifests** used to run the engineering thesis project:
 

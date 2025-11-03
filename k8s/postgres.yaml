@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:18-alpine
+          image: postgres:17.6-alpine3.22
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5432
@@ -44,13 +44,6 @@ spec:
               mountPath: /var/lib/postgresql/data
             - name: initdb
               mountPath: /docker-entrypoint-initdb.d
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "250m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
       volumes:
         - name: initdb
           configMap:
@@ -60,6 +53,7 @@ spec:
         name: data
       spec:
         accessModes: ["ReadWriteOnce"]
+        storageClassName: standard
         resources:
           requests:
             storage: 5Gi
@@ -80,4 +74,3 @@ spec:
       protocol: TCP
   selector:
     app: postgres
-
