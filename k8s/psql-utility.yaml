@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: psql
+  namespace: crm-rfm
+  labels:
+    app: psql-utility
+spec:
+  restartPolicy: Never
+  containers:
+    - name: psql
+      image: postgres:18-alpine
+      command: ["sleep", "infinity"]
+      env:
+        - name: PGHOST
+          value: postgres.crm-rfm.svc.cluster.local
+        - name: PGDATABASE
+          value: crmdb
+        - name: PGUSER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_USER
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+

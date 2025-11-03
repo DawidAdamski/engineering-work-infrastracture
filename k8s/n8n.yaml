@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n
+  namespace: crm-rfm
+  labels:
+    app: n8n
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: n8n
+  template:
+    metadata:
+      labels:
+        app: n8n
+    spec:
+      containers:
+        - name: n8n
+          image: n8nio/n8n:1.118.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5678
+              name: http
+          env:
+            - name: POSTGRES_HOST
+              value: postgres.crm-rfm.svc.cluster.local
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: crm-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: crm-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: crm-secrets
+                  key: POSTGRES_PASSWORD
+            - name: QDRANT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: crm-config
+                  key: QDRANT_URL
+            - name: QDRANT_COLLECTION
+              valueFrom:
+                configMapKeyRef:
+                  name: crm-config
+                  key: QDRANT_COLLECTION
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: crm-secrets
+                  key: OPENAI_API_KEY
+            - name: OPENAI_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: crm-config
+                  key: OPENAI_MODEL
+            - name: N8N_HOST
+              value: n8n.crm-rfm.svc.cluster.local
+            - name: N8N_PORT
+              value: "5678"
+            - name: N8N_PROTOCOL
+              value: http
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n
+  namespace: crm-rfm
+  labels:
+    app: n8n
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 5678
+      targetPort: 5678
+      protocol: TCP
+  selector:
+    app: n8n
+

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: crm-rfm
+  labels:
+    name: crm-rfm
+    app.kubernetes.io/name: crm-rfm
+
