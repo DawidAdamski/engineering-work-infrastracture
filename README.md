@@ -58,7 +58,7 @@ All container images are locked to specific versions to ensure reproducible depl
 
 | Component | Image (Docker Hub) | Version | Purpose |
 |:--|:--|:--|:--|
-| **PostgreSQL** | [`postgres`](https://hub.docker.com/_/postgres) | `18-alpine` | PostgreSQL 18 database for storing CRM transactional data |
+| **PostgreSQL** | [`postgres`](https://hub.docker.com/_/postgres) | `17.6-alpine3.22` | PostgreSQL 17.6 database for storing CRM transactional data |
 | **Qdrant** | [`qdrant/qdrant`](https://hub.docker.com/r/qdrant/qdrant) | `v1.15.5` | Vector database for embeddings and similarity search |
 | **n8n** | [`n8nio/n8n`](https://hub.docker.com/r/n8nio/n8n) | `1.118.1` | Workflow automation platform for embedding generation |
 | **ArgoCD Server** | `quay.io/argoproj/argocd` | `v3.1.9` | GitOps continuous delivery server *(hosted on Quay.io)* |
@@ -70,7 +70,7 @@ All container images are locked to specific versions to ensure reproducible depl
 
 **Notes:** 
 - **Docker Hub** is the primary repository for application images (PostgreSQL, Qdrant, n8n).
-- PostgreSQL uses the official `postgres` image version 18 — plain PostgreSQL without vector extensions.
+- PostgreSQL uses the official `postgres` image version 17.6-alpine3.22 — plain PostgreSQL without vector extensions.
 - Version tags are locked to ensure consistency across deployments.
 - Update versions only after testing in a development environment.
 - For ArgoCD, all components use the same version (`v3.1.9`) and are hosted on Quay.io.
