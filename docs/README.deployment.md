@@ -92,7 +92,34 @@ minikube ip
 # Qdrant: http://$(minikube ip):30333
 ```
 
-### Option B: Ingress with Manual nginx-ingress
+### Option B: LoadBalancer with MetalLB (Recommended for Production-like Testing)
+
+1. **Install MetalLB**:
+   ```bash
+   kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.8/config/manifests/metallb-native.yaml
+   kubectl wait --namespace metallb-system \
+     --for=condition=ready pod \
+     --selector=app=metallb \
+     --timeout=90s
+   ```
+
+2. **Configure IP pool** (edit `k8s/metallb-config.yaml` with your Minikube IP range):
+   ```bash
+   kubectl apply -f k8s/metallb-config.yaml
+   ```
+
+3. **Apply LoadBalancer services**:
+   ```bash
+   kubectl apply -f k8s/services-loadbalancer.yaml -n crm-rfm
+   ```
+
+4. **Get external IPs**:
+   ```bash
+   kubectl get svc -n crm-rfm
+   # Access services via their EXTERNAL-IP addresses
+   ```
+
+### Option C: Ingress with Manual nginx-ingress
 
 1. **Install nginx-ingress controller** (not via addon):
    ```bash
@@ -229,6 +256,7 @@ minikube delete
 |:--|:--|:--|
 | Pod stuck in CrashLoopBackOff | ConfigMap or Secret missing | Check `kubectl describe pod` |
 | Cannot access services via NodePort | Minikube not running or firewall blocking | Check `minikube status`, verify firewall rules |
+| LoadBalancer stuck in Pending | MetalLB not installed or IP pool misconfigured | Install MetalLB, verify IP pool matches Minikube subnet |
 | Ingress not working | nginx-ingress not installed or DNS not configured | Install nginx-ingress, check `/etc/hosts` entry |
 | Embeddings not created | OpenAI key invalid or network blocked | Check n8n logs for API errors |
 | Qdrant empty | Workflow not triggered | Run n8n manually via its UI |
