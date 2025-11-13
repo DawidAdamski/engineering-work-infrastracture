@@ -100,6 +100,137 @@ Environment variables are injected from a Secret named `postgres-secret`.
 
 ---
 
+## Connecting to PostgreSQL
+
+There are several ways to connect to PostgreSQL depending on your use case:
+
+### Method 1: Direct Pod Access (kubectl exec)
+
+Connect directly to the PostgreSQL pod using `kubectl exec`:
+
+```bash
+# Interactive psql session
+kubectl exec -it postgres-0 -n crm-rfm -- psql -U crmuser -d crmdb
+```
+
+**Note:** PostgreSQL runs as a **StatefulSet**, so the pod name is `postgres-0` (not `deploy/postgres`).
+
+Once connected, you can run SQL queries:
+
+```sql
+-- List all tables
+\dt
+
+-- Query customers
+SELECT * FROM customers LIMIT 10;
+
+-- Exit psql
+\q
+```
+
+### Method 2: Port-Forward (Local Access)
+
+Forward the PostgreSQL port to your local machine:
+
+```bash
+# Port-forward PostgreSQL service
+kubectl port-forward svc/postgres 5432:5432 -n crm-rfm
+```
+
+Then connect from your local machine using any PostgreSQL client:
+
+```bash
+# Using psql (if installed locally)
+# Replace <username> and <password> with actual values from postgres-secret
+psql -h localhost -p 5432 -U <username> -d <database>
+
+# Connection string for applications
+# Format: postgresql://<username>:<password>@localhost:5432/<database>
+postgresql://crmuser:changeme@localhost:5432/crmdb
+```
+
+**Note:** Replace `<username>`, `<password>`, and `<database>` with actual values retrieved from the `postgres-secret` (see "Retrieving Credentials" section below).
+
+**Note:** Keep the port-forward terminal session running while you use the connection.
+
+### Method 3: NodePort (Direct External Access)
+
+PostgreSQL is exposed as a **NodePort** service on port `30432`:
+
+```bash
+# Get Minikube IP
+minikube ip
+
+# Connect using psql (replace <minikube-ip> with actual IP)
+psql -h $(minikube ip) -p 30432 -U crmuser -d crmdb
+```
+
+**Connection string:**
+```
+# Format: postgresql://<username>:<password>@$(minikube ip):30432/<database>
+postgresql://crmuser:changeme@$(minikube ip):30432/crmdb
+```
+
+**Note:** Replace credentials with actual values from your `postgres-secret`.
+
+### Method 4: From Within Kubernetes Cluster
+
+Applications running inside the cluster can connect using the internal DNS:
+
+**Connection string:**
+```
+# Format: postgresql://<username>:<password>@postgres.crm-rfm.svc.cluster.local:5432/<database>
+postgresql://crmuser:changeme@postgres.crm-rfm.svc.cluster.local:5432/crmdb
+```
+
+**Environment variables** (use actual values from `postgres-secret`):
+- `POSTGRES_HOST=postgres.crm-rfm.svc.cluster.local`
+- `POSTGRES_PORT=5432`
+- `POSTGRES_USER=<username>` (default: `crmuser`)
+- `POSTGRES_PASSWORD=<password>` (default: `changeme`)
+- `POSTGRES_DB=<database>` (default: `crmdb`)
+
+### Retrieving Credentials from Kubernetes Secret
+
+**⚠️ Important:** Always verify the actual credentials from your deployed secret, as they may differ from the defaults.
+
+To retrieve the actual credentials from your cluster:
+
+```bash
+# Get username
+kubectl get secret postgres-secret -n crm-rfm \
+  -o jsonpath="{.data.POSTGRES_USER}" | base64 -d && echo
+
+# Get password
+kubectl get secret postgres-secret -n crm-rfm \
+  -o jsonpath="{.data.POSTGRES_PASSWORD}" | base64 -d && echo
+
+# Get database name
+kubectl get secret postgres-secret -n crm-rfm \
+  -o jsonpath="{.data.POSTGRES_DB}" | base64 -d && echo
+```
+
+**Default credentials** (as defined in `k8s/secrets.yaml` - may not match your actual deployment):
+- **Username:** `crmuser`
+- **Password:** `changeme`
+- **Database:** `crmdb`
+
+**Note:** If you've customized the secret or it was generated differently, use the commands above to retrieve the actual values from your cluster.
+
+### Using a PostgreSQL Client Tool
+
+If you prefer a GUI client (e.g., DBeaver, pgAdmin, TablePlus), use **Method 2 (Port-Forward)** and connect with:
+
+- **Host:** `localhost`
+- **Port:** `5432`
+- **Database:** Retrieve from `postgres-secret` (default: `crmdb`)
+- **Username:** Retrieve from `postgres-secret` (default: `crmuser`)
+- **Password:** Retrieve from `postgres-secret` (default: `changeme`)
+
+**⚠️ Always verify actual credentials using the commands in the "Retrieving Credentials" section above.**
+
+---
+
 ## Initialization Script
 
 If you want to bootstrap schema automatically, you can mount an init SQL file in /docker-entrypoint-initdb.d/ or use an initContainer.
@@ -130,14 +261,14 @@ CREATE TABLE orders (
 ### To Export Data
 
 ```bash
-kubectl exec -it deploy/postgres -n crm-rfm -- \
+kubectl exec -it postgres-0 -n crm-rfm -- \
   pg_dump -U crmuser crmdb > backup.sql
 ```
 
 ### To Import
 
 ```bash
-kubectl exec -i deploy/postgres -n crm-rfm -- \
+kubectl exec -i postgres-0 -n crm-rfm -- \
   psql -U crmuser -d crmdb < backup.sql
 ```
 

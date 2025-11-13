@@ -22,7 +22,7 @@ It enables **AI-based segmentation and similarity search** across CRM customers.
 |**Service name**|`qdrant`|
 |**Port**|`6333`|
 |**Persistence**|PVC mounted to `/qdrant/storage`|
-|**Access**|Internal ClusterIP service|
+|**Access**|LoadBalancer (with MetalLB) or NodePort|
 
 Internal DNS for in-cluster communication:
 qdrant.crm-rfm.svc.cluster.local:6333
@@ -141,10 +141,122 @@ Response example:
 
 ---
 
+## Accessing Qdrant
+
+Qdrant provides a **web UI** and **REST API** for managing collections and querying vectors. There are several ways to access it:
+
+### Method 1: LoadBalancer (External IP)
+
+If Qdrant is deployed as a **LoadBalancer** service (with MetalLB), it will have an external IP:
+
+```bash
+# Check the external IP
+kubectl get svc qdrant -n crm-rfm
+
+# Example output:
+# NAME     TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)
+# qdrant   LoadBalancer   10.99.183.220   192.168.0.202   6333:31746/TCP,6334:30812/TCP
+```
+
+**Access Qdrant:**
+- **Web UI:** `http://<EXTERNAL-IP>:6333/dashboard`
+- **REST API:** `http://<EXTERNAL-IP>:6333`
+- **gRPC:** `<EXTERNAL-IP>:6334`
+
+**Example:**
+```bash
+# Open Qdrant dashboard in browser
+open http://192.168.0.202:6333/dashboard
+
+# Or access via curl
+curl http://192.168.0.202:6333/collections
+```
+
+### Method 2: Port-Forward (Local Access)
+
+Forward the Qdrant port to your local machine:
+
+```bash
+# Port-forward Qdrant service
+kubectl port-forward svc/qdrant 6333:6333 -n crm-rfm
+```
+
+Then access:
+- **Web UI:** `http://localhost:6333/dashboard`
+- **REST API:** `http://localhost:6333`
+
+**Note:** Keep the port-forward terminal session running while you use the connection.
+
+### Method 3: NodePort (Direct External Access)
+
+If Qdrant is exposed as a **NodePort** service:
+
+```bash
+# Get Minikube IP
+minikube ip
+
+# Access Qdrant (replace <minikube-ip> with actual IP)
+open http://$(minikube ip):30333/dashboard
+curl http://$(minikube ip):30333/collections
+```
+
+### Method 4: From Within Kubernetes Cluster
+
+Applications running inside the cluster can connect using the internal DNS:
+
+**REST API URL:**
+```
+http://qdrant.crm-rfm.svc.cluster.local:6333
+```
+
+**gRPC URL:**
+```
+qdrant.crm-rfm.svc.cluster.local:6334
+```
+
+**Environment variables:**
+- `QDRANT_URL=http://qdrant.crm-rfm.svc.cluster.local:6333`
+- `QDRANT_GRPC_URL=qdrant.crm-rfm.svc.cluster.local:6334`
+
+### Qdrant Web Dashboard
+
+Qdrant provides a built-in web dashboard for:
+- Viewing collections
+- Browsing points/vectors
+- Testing queries
+- Monitoring cluster status
+
+**Access the dashboard:**
+- Via LoadBalancer: `http://<EXTERNAL-IP>:6333/dashboard`
+- Via Port-Forward: `http://localhost:6333/dashboard`
+- Via NodePort: `http://$(minikube ip):30333/dashboard`
+
+### Common API Endpoints
+
+```bash
+# List all collections
+curl http://<qdrant-url>/collections
+
+# Get collection info
+curl http://<qdrant-url>/collections/customers
+
+# Search for similar vectors
+curl -X POST http://<qdrant-url>/collections/customers/points/search \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vector": [0.1, 0.2, 0.3, ...],
+    "limit": 5
+  }'
+```
+
+---
+
 ## Security & Access
 
-- Default deployment exposes only port `6333` (HTTP API).
-- Limit external exposure — Qdrant should remain an internal ClusterIP service.
+- Default deployment exposes port `6333` (HTTP REST API) and `6334` (gRPC).
+- Qdrant web dashboard is available at `/dashboard` endpoint.
+- For production, consider enabling authentication via `QDRANT_API_KEY`.
+- Limit external exposure — Qdrant can remain an internal ClusterIP service if only accessed from within the cluster.
 - Secure credentials and configuration using Kubernetes Secrets or ConfigMaps.
 
 ---

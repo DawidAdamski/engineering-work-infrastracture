@@ -110,7 +110,51 @@ kubectl patch application postgres -n argocd \
 
 ## Accessing the UI
 
-### Port-forward
+There are several ways to access ArgoCD UI without port-forward:
+
+### Method 1: LoadBalancer with MetalLB (Recommended)
+
+If you have MetalLB installed, expose ArgoCD as a LoadBalancer service:
+
+```bash
+# Apply LoadBalancer service for ArgoCD
+kubectl apply -f k8s/argocd-loadbalancer.yaml -n argocd
+
+# Check the external IP
+kubectl get svc argocd-server -n argocd
+
+# Example output:
+# NAME            TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)
+# argocd-server   LoadBalancer   10.97.133.222   192.168.0.203   80:30080/TCP,443:30443/TCP
+```
+
+**Access ArgoCD:**
+- **HTTPS:** `https://<EXTERNAL-IP>` (or `http://<EXTERNAL-IP>` if using HTTP)
+- **Example:** `https://192.168.0.203`
+
+**Note:** ArgoCD may require HTTPS. If you get certificate errors, you can:
+- Accept the self-signed certificate in your browser
+- Or access via HTTP if ArgoCD is configured to allow it
+
+### Method 2: NodePort (Direct Access)
+
+Change the ArgoCD server service to NodePort:
+
+```bash
+# Patch the service to NodePort
+kubectl patch svc argocd-server -n argocd -p '{"spec":{"type":"NodePort"}}'
+
+# Get the NodePort
+kubectl get svc argocd-server -n argocd
+
+# Access via Minikube IP
+minikube ip
+# Then access: https://$(minikube ip):<NODEPORT>
+```
+
+### Method 3: Port-Forward (Local Access)
+
+For local development, use port-forward:
 
 ```bash
 kubectl port-forward svc/argocd-server 8080:443 -n argocd
@@ -118,18 +162,9 @@ kubectl port-forward svc/argocd-server 8080:443 -n argocd
 
 Access the UI at: `https://localhost:8080`
 
-Default credentials (for initial setup):
-- Username: `admin`
-- Password: Retrieve with:
+### Method 4: Ingress (Domain-based Access)
 
-```bash
-kubectl -n argocd get secret argocd-initial-admin-secret \
-  -o jsonpath="{.data.password}" | base64 -d && echo
-```
-
-### Ingress (Optional)
-
-For external access, configure an Ingress resource:
+For domain-based routing, configure an Ingress resource:
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -137,6 +172,9 @@ kind: Ingress
 metadata:
   name: argocd-server-ingress
   namespace: argocd
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
 spec:
   ingressClassName: nginx
   rules:
@@ -151,6 +189,26 @@ spec:
                 port:
                   number: 80
 ```
+
+Then add to `/etc/hosts`:
+```
+<minikube-ip>  argocd.local
+```
+
+Access at: `http://argocd.local`
+
+### Default Credentials
+
+Default credentials (for initial setup):
+- **Username:** `admin`
+- **Password:** Retrieve with:
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d && echo
+```
+
+**⚠️ Security Note:** Change the default password after first login in production environments!
 
 ---
 

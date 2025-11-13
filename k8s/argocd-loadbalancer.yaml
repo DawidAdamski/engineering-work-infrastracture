@@ -1,0 +1,35 @@
+# LoadBalancer Service for ArgoCD Server (for use with MetalLB)
+# This service exposes ArgoCD server externally without port-forward
+# Apply this after installing MetalLB and configuring the IP pool
+#
+# Usage:
+#   1. Ensure MetalLB is installed and configured (see k8s/metallb-config.yaml)
+#   2. Apply this service:
+#      kubectl apply -f k8s/argocd-loadbalancer.yaml -n argocd
+#   3. Check the external IP:
+#      kubectl get svc argocd-server -n argocd
+#   4. Access ArgoCD UI:
+#      https://<EXTERNAL-IP> (or http://<EXTERNAL-IP> if using HTTP)
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-server
+    app.kubernetes.io/part-of: argocd
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: argocd-server
+

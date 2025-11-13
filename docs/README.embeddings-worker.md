@@ -117,19 +117,97 @@ Internal URL for in-cluster services:
 
 ## Accessing the UI
 
-To view or modify the workflow graphically:
+### Method 1: Port-Forward (Recommended - Easiest)
 
-```bash
-minikube service n8n -n crm-rfm
-```
-
-Or forward the port:
+**Port-forward is the simplest and most reliable method** for accessing n8n:
 
 ```bash
 kubectl port-forward svc/n8n 5678:5678 -n crm-rfm
 ```
 
-Then open `http://localhost:5678`.
+Then open in your browser: **`http://localhost:5678`**
+
+**Note:** 
+- Keep the port-forward terminal session running while you use n8n
+- Press `Ctrl+C` to stop the port-forward when done
+- Works from any machine that can run `kubectl` commands
+
+### Method 2: LoadBalancer (External IP)
+
+If n8n is deployed as a **LoadBalancer** service (with MetalLB), it will have an external IP:
+
+```bash
+# Check the external IP
+kubectl get svc n8n -n crm-rfm
+
+# Example output:
+# NAME   TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)
+# n8n    LoadBalancer   10.104.239.39   192.168.0.201   5678:30569/TCP
+```
+
+**Access n8n:**
+- **URL:** `http://<EXTERNAL-IP>:5678`
+- **Example:** `http://192.168.0.201:5678`
+
+**Note:** LoadBalancer IPs may not be accessible from all networks. If the external IP doesn't work, use port-forward instead.
+
+### Method 3: NodePort (Direct External Access)
+
+If n8n is exposed as a **NodePort** service:
+
+```bash
+# Get Minikube IP
+minikube ip
+
+# Access n8n (replace <minikube-ip> with actual IP)
+open http://$(minikube ip):30678
+```
+
+### Method 4: From Within Kubernetes Cluster
+
+Applications running inside the cluster can connect using the internal DNS:
+
+**URL:**
+```
+http://n8n.crm-rfm.svc.cluster.local:5678
+```
+
+**Environment variables:**
+- `N8N_URL=http://n8n.crm-rfm.svc.cluster.local:5678`
+- `N8N_HOST=n8n.crm-rfm.svc.cluster.local`
+- `N8N_PORT=5678`
+- `N8N_PROTOCOL=http`
+
+### Authentication & First-Time Setup
+
+**Default behavior:** n8n does **not require authentication** by default on first access.
+
+**First-time access:**
+1. Open the n8n URL in your browser (e.g., `http://192.168.0.201:5678`)
+2. You will be prompted to **create your first user account**
+3. Enter your email and password to create the admin account
+4. After creating the account, you'll be logged in automatically
+
+**Subsequent logins:**
+- Use the email and password you created during first-time setup
+- If you forgot your password, you can reset it (if email is configured) or recreate the n8n instance
+
+### Optional: Basic Authentication
+
+To enable basic authentication (username/password) before accessing n8n, set these environment variables in the deployment:
+
+```yaml
+env:
+  - name: N8N_BASIC_AUTH_USER
+    value: "admin"
+  - name: N8N_BASIC_AUTH_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: crm-secrets
+        key: N8N_BASIC_AUTH_PASSWORD
+```
+
+**Note:** Basic authentication is **optional** and not configured by default. If not set, n8n uses its own user management system (created on first access).
 
 ---
 

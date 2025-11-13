@@ -223,7 +223,7 @@ See [Service Access Guide](README.service-access.md) for more details.
 You can initialize fake CRM data directly in PostgreSQL:
 
 ```bash
-kubectl exec -it deploy/postgres -n crm-rfm -- psql -U crmuser -d crmdb
+kubectl exec -it postgres-0 -n crm-rfm -- psql -U crmuser -d crmdb
 ```
 
 ```sql
