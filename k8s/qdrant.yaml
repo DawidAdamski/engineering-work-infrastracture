@@ -53,15 +53,17 @@ metadata:
   labels:
     app: qdrant
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
     - name: rest
       port: 6333
       targetPort: 6333
+      nodePort: 30333
       protocol: TCP
     - name: grpc
       port: 6334
       targetPort: 6334
+      nodePort: 30334
       protocol: TCP
   selector:
     app: qdrant

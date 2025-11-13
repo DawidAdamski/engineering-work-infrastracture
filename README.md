@@ -113,10 +113,12 @@ kubectl get pods -n argocd
 kubectl port-forward svc/argocd-server 8080:443 -n argocd
 # Open https://localhost:8080 in your browser
 
-# (Optional) Expose services for local access
-kubectl port-forward svc/qdrant 6333:6333 -n crm-rfm
-kubectl port-forward svc/postgres 5432:5432 -n crm-rfm
-kubectl port-forward svc/crm-api 8000:8000 -n crm-rfm
+# Access services via NodePort (no port-forward needed)
+MINIKUBE_IP=$(minikube ip)
+# CRM API: http://${MINIKUBE_IP}:30080
+# n8n: http://${MINIKUBE_IP}:30567
+# Qdrant REST: http://${MINIKUBE_IP}:30333
+# Qdrant gRPC: http://${MINIKUBE_IP}:30334
 ```
 
 ### Detailed Documentation

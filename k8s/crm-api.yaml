@@ -58,11 +58,12 @@ metadata:
   labels:
     app: crm-api
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
     - name: http
       port: 8000
       targetPort: 8000
+      nodePort: 30080
       protocol: TCP
   selector:
     app: crm-api
