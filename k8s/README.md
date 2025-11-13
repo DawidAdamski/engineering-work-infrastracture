@@ -18,6 +18,7 @@ This directory contains all Kubernetes manifests for the CRM-RFM infrastructure.
 | `metallb-config.yaml` | MetalLB IP pool configuration for LoadBalancer services |
 | `services-loadbalancer.yaml` | LoadBalancer service definitions (for use with MetalLB) |
 | `nginx-ingress-controller.yaml` | Manual nginx-ingress controller installation (not via addon) |
+| `haproxy-ingress-controller.yaml` | HAProxy Ingress controller installation (high-performance alternative) |
 
 ## Deployment Order
 
@@ -52,7 +53,8 @@ Services are configured as **NodePort** by default for direct access without por
 For production-like setups, you can use:
 
 - **MetalLB LoadBalancer** - Install MetalLB and use `services-loadbalancer.yaml` (see `docs/README.service-access.md`)
-- **Ingress** - Install nginx-ingress controller and use `ingress.yaml` (see `docs/README.service-access.md`)
+- **Ingress with nginx** - Install nginx-ingress controller and use `ingress.yaml` (see `docs/README.service-access.md`)
+- **Ingress with HAProxy** - Install HAProxy Ingress controller for high-performance load balancing (see `docs/README.service-access.md`)
 
 See [Service Access Guide](../docs/README.service-access.md) for detailed instructions on all access methods.
 

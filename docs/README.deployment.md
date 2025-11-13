@@ -119,7 +119,7 @@ minikube ip
    # Access services via their EXTERNAL-IP addresses
    ```
 
-### Option C: Ingress with Manual nginx-ingress
+### Option C: Ingress with nginx-ingress
 
 1. **Install nginx-ingress controller** (not via addon):
    ```bash
@@ -142,6 +142,33 @@ minikube ip
 
 4. **Access via Ingress**:
    - CRM API → `http://crm.local` or `http://$(minikube ip):30000`
+
+### Option D: Ingress with HAProxy (High-Performance Alternative)
+
+1. **Install HAProxy Ingress controller**:
+   ```bash
+   kubectl apply -f k8s/haproxy-ingress-controller.yaml
+   kubectl wait --namespace haproxy-ingress \
+     --for=condition=ready pod \
+     --selector=app.kubernetes.io/name=haproxy-ingress \
+     --timeout=300s
+   ```
+
+2. **Update Ingress to use HAProxy** (change `ingressClassName` to `haproxy` in `k8s/ingress.yaml`)
+
+3. **Apply Ingress**:
+   ```bash
+   kubectl apply -f k8s/ingress.yaml -n crm-rfm
+   ```
+
+4. **Add local DNS entry**:
+   ```
+   <minikube-ip>  crm.local
+   ```
+
+5. **Access via HAProxy**:
+   - CRM API → `http://crm.local` or `http://$(minikube ip):30081`
+   - HAProxy Stats → `http://$(minikube ip):31024/stats`
 
 See [Service Access Guide](README.service-access.md) for detailed instructions.
 

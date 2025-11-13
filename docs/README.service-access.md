@@ -2,10 +2,11 @@
 
 This document explains how to access services in the CRM infrastructure **without using port-forward** and **without Minikube addons**.
 
-Three approaches are available:
+Four approaches are available:
 1. **NodePort Services** - Direct access via Minikube node IP and assigned ports
 2. **LoadBalancer with MetalLB** - Production-like LoadBalancer services (recommended for production-like testing)
-3. **Ingress with Manual nginx-ingress** - HTTP/HTTPS routing via Ingress controller (installed manually, not via addon)
+3. **Ingress with nginx-ingress** - HTTP/HTTPS routing via nginx Ingress controller (installed manually, not via addon)
+4. **Ingress with HAProxy** - High-performance load balancing via HAProxy Ingress controller (alternative to nginx)
 
 ---
 
@@ -177,7 +178,7 @@ kubectl describe ipaddresspool default-pool -n metallb-system
 
 ---
 
-## Option 3: Ingress with Manual nginx-ingress (Production-like)
+## Option 3: Ingress with nginx-ingress (Production-like)
 
 Use **Ingress** resources with a manually installed nginx-ingress controller (not via Minikube addon).
 
@@ -272,19 +273,116 @@ spec:
 
 ---
 
+## Option 4: Ingress with HAProxy (High-Performance Alternative)
+
+**HAProxy** is a high-performance, production-grade load balancer that can be used as an Ingress controller. It's an alternative to nginx-ingress, offering better performance for high-traffic scenarios and advanced load balancing features.
+
+### Installation
+
+1. **Install HAProxy Ingress controller**:
+   ```bash
+   kubectl apply -f k8s/haproxy-ingress-controller.yaml
+   ```
+
+2. **Wait for controller to be ready**:
+   ```bash
+   kubectl wait --namespace haproxy-ingress \
+     --for=condition=ready pod \
+     --selector=app.kubernetes.io/name=haproxy-ingress \
+     --timeout=300s
+   ```
+
+3. **Update Ingress to use HAProxy**:
+   Edit `k8s/ingress.yaml` and change `ingressClassName` from `nginx` to `haproxy`:
+   ```yaml
+   spec:
+     ingressClassName: haproxy  # Changed from nginx
+   ```
+
+4. **Apply Ingress**:
+   ```bash
+   kubectl apply -f k8s/ingress.yaml -n crm-rfm
+   ```
+
+### Accessing Services via HAProxy
+
+The HAProxy controller is exposed as a **NodePort** service:
+
+| Service | NodePort | Access URL |
+|:--|:--|:--|
+| **HAProxy HTTP** | `30081` | `http://crm.local` (requires `/etc/hosts` entry) |
+| **HAProxy HTTPS** | `30444` | `https://crm.local` (requires `/etc/hosts` entry) |
+| **HAProxy Stats** | `31024` | `http://$(minikube ip):31024/stats` (monitoring) |
+
+### Configure Local DNS
+
+Add to `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Windows):
+
+```
+<minikube-ip>  crm.local
+```
+
+### Optional: Use MetalLB with HAProxy
+
+For LoadBalancer access, you can combine HAProxy with MetalLB:
+
+1. Install MetalLB (see Option 2)
+2. Change HAProxy service type to LoadBalancer:
+   ```bash
+   kubectl patch svc haproxy-ingress -n haproxy-ingress \
+     --type='json' \
+     -p='[{"op": "replace", "path": "/spec/type", "value":"LoadBalancer"}]'
+   ```
+3. HAProxy will get an external IP from MetalLB
+
+### Advantages
+
+- ✅ **High performance** - Optimized for high-traffic scenarios
+- ✅ **Advanced load balancing** - Multiple algorithms (round-robin, leastconn, etc.)
+- ✅ **Built-in monitoring** - Statistics dashboard on port 1024
+- ✅ **Production-grade** - Widely used in enterprise environments
+- ✅ **SSL/TLS termination** - Full support for HTTPS
+- ✅ **Path-based routing** - Same Ingress features as nginx
+- ✅ **Can combine with MetalLB** - Use LoadBalancer type for external IPs
+
+### Disadvantages
+
+- ⚠️ **Requires additional component** - Must install HAProxy Ingress controller
+- ⚠️ **Requires DNS configuration** - Need to edit `/etc/hosts` or use DNS
+- ⚠️ **More complex setup** - Additional deployment step
+- ⚠️ **Less common than nginx** - Fewer examples and community resources
+
+### When to Use HAProxy vs nginx-ingress
+
+**Use HAProxy** when:
+- You need maximum performance and throughput
+- You require advanced load balancing algorithms
+- You want built-in statistics and monitoring
+- You're familiar with HAProxy configuration
+
+**Use nginx-ingress** when:
+- You prefer a more common, well-documented solution
+- You need extensive annotation support
+- You want easier configuration and more examples
+
+---
+
 ## Comparison
 
-| Feature | NodePort | MetalLB LoadBalancer | Ingress |
-|:--|:--|:--|:--|
-| **Setup Complexity** | Simple | Moderate | Moderate |
-| **Additional Components** | None | MetalLB | nginx-ingress controller |
-| **Access Method** | IP + Port | IP + Port | Domain name |
-| **Port Range** | 30000-32767 | Any (80, 443, etc.) | Configurable (default 30000) |
-| **Production Ready** | Limited | Yes | Yes |
-| **Path Routing** | No | No | Yes |
-| **SSL/TLS** | No | Yes (with service config) | Yes |
-| **Service Type** | NodePort | LoadBalancer | ClusterIP + Ingress |
-| **IP Assignment** | Node IP | Dedicated IP per service | Via Ingress IP |
+| Feature | NodePort | MetalLB LoadBalancer | nginx Ingress | HAProxy Ingress |
+|:--|:--|:--|:--|:--|
+| **Setup Complexity** | Simple | Moderate | Moderate | Moderate |
+| **Additional Components** | None | MetalLB | nginx-ingress | HAProxy Ingress |
+| **Access Method** | IP + Port | IP + Port | Domain name | Domain name |
+| **Port Range** | 30000-32767 | Any (80, 443, etc.) | Configurable | Configurable |
+| **Production Ready** | Limited | Yes | Yes | Yes |
+| **Path Routing** | No | No | Yes | Yes |
+| **SSL/TLS** | No | Yes (with service config) | Yes | Yes |
+| **Service Type** | NodePort | LoadBalancer | ClusterIP + Ingress | ClusterIP + Ingress |
+| **IP Assignment** | Node IP | Dedicated IP per service | Via Ingress IP | Via Ingress IP |
+| **Performance** | Good | Good | Very Good | Excellent |
+| **Monitoring** | Basic | Basic | Good | Built-in stats |
+| **Load Balancing** | Basic | Basic | Good | Advanced algorithms |
 
 ---
 
@@ -307,11 +405,22 @@ Use **MetalLB LoadBalancer** (Option 2) for realistic testing:
 
 ### For Domain-based Routing
 
-Use **Ingress** (Option 3) for domain-based access:
+Use **Ingress** (Option 3 or 4) for domain-based access:
 - Better for testing domain-based routing
 - Single entry point for multiple services
 - Supports SSL/TLS configuration
 - Can combine with MetalLB (Ingress controller as LoadBalancer)
+
+**Choose nginx-ingress** (Option 3) for:
+- More common, well-documented solution
+- Extensive annotation support
+- Easier configuration
+
+**Choose HAProxy** (Option 4) for:
+- Maximum performance and throughput
+- Advanced load balancing algorithms
+- Built-in statistics dashboard
+- Enterprise-grade features
 
 ---
 
@@ -417,7 +526,8 @@ curl http://$(minikube ip):30333/collections
 ## Notes
 
 - **All methods can coexist** - You can use NodePort, LoadBalancer, and Ingress simultaneously
-- **MetalLB + Ingress** - You can use MetalLB to provide LoadBalancer IP for the Ingress controller, combining both approaches
+- **MetalLB + Ingress** - You can use MetalLB to provide LoadBalancer IP for the Ingress controller (nginx or HAProxy), combining both approaches
+- **HAProxy vs nginx** - Both are excellent Ingress controllers; choose based on your performance needs and familiarity
 - **Security considerations** - NodePort and LoadBalancer expose services directly; Ingress provides additional routing and security features
 - **Minikube tunnel** - Alternative to MetalLB for LoadBalancer services (not covered here as it requires additional setup)
 - **Service types** - Services are configured as NodePort by default; they can be changed to LoadBalancer (with MetalLB) or ClusterIP (with Ingress)
