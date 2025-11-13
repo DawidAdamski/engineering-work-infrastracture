@@ -35,10 +35,9 @@ The CRM API image is available on Docker Hub:
 ```bash
 # Pull the latest image from Docker Hub
 docker pull anihilat/crm-api:latest
-
-# Or pull a specific version
-docker pull anihilat/crm-api:v1.0.0
 ```
+
+**Note:** CRM API always uses the `latest` tag to ensure you're running the most recent version.
 
 ### Build from Source (Optional)
 

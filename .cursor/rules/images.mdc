@@ -107,10 +107,9 @@ All ArgoCD components use version `v3.1.9` for compatibility.
 **Note:** 
 - This image is available on Docker Hub at `anihilat/crm-api`.
 - Built using standard Docker build from the CRM application source code.
-- Build command: `docker build -t anihilat/crm-api:<version> .`
-- Version tagging should follow semantic versioning (e.g., `v1.0.0`, `v1.1.0`).
-- **Never use `latest` tag** in production — always build and tag with specific versions.
-- Can be pulled from Docker Hub: `docker pull anihilat/crm-api:<version>`
+- Build command: `docker build -t anihilat/crm-api:latest .`
+- **Always uses `latest` tag** to ensure the most recent version is deployed.
+- Can be pulled from Docker Hub: `docker pull anihilat/crm-api:latest`
 
 ---
 
