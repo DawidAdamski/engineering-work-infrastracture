@@ -15,23 +15,32 @@ Before deploying, ensure the following are installed on your workstation:
 |[Minikube](https://minikube.sigs.k8s.io/docs/)|Local Kubernetes cluster|≥ 1.33|
 |[kubectl](https://kubernetes.io/docs/tasks/tools/)|Kubernetes CLI|≥ 1.30|
 |[Helm](https://helm.sh/docs/)|Optional for packaged charts|≥ 3.14|
-|[Docker](https://docs.docker.com/)|Image building and runtime|≥ 25|
+|[Docker](https://docs.docker.com/)|Image building and runtime (required for Docker driver)|≥ 25|
+|[Hyper-V](https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/)|Virtualization platform (required for Hyper-V driver on Windows)|Windows 10/11 Pro/Enterprise|
 |[curl / jq](https://stedolan.github.io/jq/)|Testing and JSON parsing|Latest|
 
 ---
 
 ## 2. Start Minikube
 
+### Option A: Docker Driver (Default)
+
 ```bash
 minikube start --cpus=4 --memory=8192 --driver=docker
 ```
 
-Optional: enable ingress and metrics add-ons:
+### Option B: Hyper-V Driver (Windows)
+
+For Windows with Hyper-V, use:
 
 ```bash
-minikube addons enable ingress
-minikube addons enable metrics-server
+minikube start --driver=hyperv --container-runtime=cri-o --cpus=2 --memory=4g --nodes 3 -v 7 --alsologtostderr --hyperv-virtual-switch="Packer-Switch"
 ```
+
+**Note**: 
+- For service access without port-forward, we recommend using **MetalLB** (see Section 5).  
+- Services are configured as **NodePort** by default, but can be switched to **LoadBalancer** with MetalLB.
+- When using Hyper-V, ensure your MetalLB IP pool matches the Minikube subnet (see Section 5.2).
 
 ---
 
@@ -80,20 +89,77 @@ kubectl apply -f k8s/crm-api.yaml -n crm-rfm
 
 ---
 
-## 5. Apply Ingress
+## 5. Access Services
+
+### Recommended: LoadBalancer with MetalLB (No Port-Forward Required)
+
+**MetalLB** provides LoadBalancer services in bare-metal Kubernetes, making services accessible without port-forward or Minikube addons.
+
+1. **Install MetalLB**:
+   ```bash
+   kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml
+   kubectl wait --namespace metallb-system \
+     --for=condition=ready pod \
+     --selector=app=metallb \
+     --timeout=90s
+   ```
+
+2. **Configure IP pool**:
+   ```bash
+   # Get Minikube IP to determine subnet
+   MINIKUBE_IP=$(minikube ip)
+   echo "Minikube IP: $MINIKUBE_IP"
+   
+   # Edit k8s/metallb-config.yaml with IP range in same subnet
+   # Examples:
+   #   - If Minikube IP is 192.168.0.40 (Hyper-V), use 192.168.0.200-192.168.0.210
+   #   - If Minikube IP is 192.168.49.2 (VirtualBox), use 192.168.49.100-192.168.49.200
+   #   - If Minikube IP is 172.17.0.2 (Docker), use 172.17.0.100-172.17.0.200
+   
+   kubectl apply -f k8s/metallb-config.yaml
+   ```
+
+3. **Replace NodePort services with LoadBalancer services**:
+   ```bash
+   kubectl apply -f k8s/services-loadbalancer.yaml -n crm-rfm
+   ```
+
+4. **Verify and access services**:
+   ```bash
+   # Check assigned external IPs
+   kubectl get svc -n crm-rfm
+   
+   # Example output:
+   # NAME       TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)
+   # crm-api    LoadBalancer   10.96.1.2       172.17.0.100     8000:30080/TCP
+   # n8n        LoadBalancer   10.96.1.3       172.17.0.101     5678:30678/TCP
+   # qdrant     LoadBalancer   10.96.1.4       172.17.0.102      6333:30333/TCP,6334:30334/TCP
+   
+   # Access services directly via external IPs:
+   curl http://172.17.0.100:8000/health  # CRM API
+   open http://172.17.0.101:5678         # n8n UI
+   curl http://172.17.0.102:6333/collections  # Qdrant
+   ```
+
+### Alternative: Direct Access via NodePort
+
+If you prefer not to use MetalLB, services are exposed as NodePort:
 
 ```bash
-kubectl apply -f k8s/ingress.yaml -n crm-rfm
+# Get Minikube IP
+minikube ip
+
+# Access services
+# CRM API: http://$(minikube ip):30080
+# n8n: http://$(minikube ip):30678
+# Qdrant: http://$(minikube ip):30333
 ```
 
-Add local DNS entry (for Minikube ingress):
+### Alternative: Ingress with Manual nginx-ingress
 
-```
-127.0.0.1 crm.local
-```
-Access via browser:
-- CRM API → `http://crm.local`
-- n8n UI (optional) → `http://crm.local/n8n`
+For domain-based routing, see [Service Access Guide](README.service-access.md) for Ingress setup.
+
+See [Service Access Guide](README.service-access.md) for detailed instructions and troubleshooting.
 
 ---
 
@@ -121,12 +187,34 @@ crm-api-deployment-6fd8cfbb7c-xyz12  1/1   Running   0   30s
 kubectl get svc -n crm-rfm
 ```
 
-### Port-forward for Local Testing (Optional)
+### Access Services
+
+If using MetalLB (recommended), services are accessible via their external IPs:
 
 ```bash
-kubectl port-forward svc/crm-api 8000:8000 -n crm-rfm
-kubectl port-forward svc/n8n 5678:5678 -n crm-rfm
+# Get service external IPs
+kubectl get svc -n crm-rfm
+
+# Access services (replace IPs with your assigned external IPs)
+curl http://<crm-api-external-ip>:8000/health
+open http://<n8n-external-ip>:5678
+curl http://<qdrant-external-ip>:6333/collections
 ```
+
+If using NodePort, access via Minikube IP:
+
+```bash
+# CRM API
+curl http://$(minikube ip):30080/health
+
+# n8n UI
+open http://$(minikube ip):30678
+
+# Qdrant
+curl http://$(minikube ip):30333/collections
+```
+
+See [Service Access Guide](README.service-access.md) for more details.
 
 ---
 
@@ -195,7 +283,10 @@ minikube delete
 | Issue | Possible Cause | Fix |
 |:--|:--|:--|
 | Pod stuck in CrashLoopBackOff | ConfigMap or Secret missing | Check `kubectl describe pod` |
-| No access to crm.local | Ingress not enabled | Run `minikube addons enable ingress` |
+| Cannot access services via LoadBalancer | MetalLB not installed or IP pool misconfigured | Install MetalLB, verify IP pool matches Minikube subnet (see Section 5) |
+| LoadBalancer stuck in Pending | MetalLB not ready or IP pool exhausted | Check `kubectl get pods -n metallb-system`, verify IP pool range |
+| Cannot access services via NodePort | Minikube not running or firewall blocking | Check `minikube status`, verify firewall rules |
+| Ingress not working | nginx-ingress not installed or DNS not configured | Install nginx-ingress, check `/etc/hosts` entry |
 | Embeddings not created | OpenAI key invalid or network blocked | Check n8n logs for API errors |
 | Qdrant empty | Workflow not triggered | Run n8n manually via its UI |
 

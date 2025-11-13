@@ -53,7 +53,7 @@ metadata:
   labels:
     app: qdrant
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
     - name: rest
       port: 6333

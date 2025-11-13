@@ -9,12 +9,15 @@ This directory contains all Kubernetes manifests for the CRM-RFM infrastructure.
 | `namespace.yaml` | Namespace `crm-rfm` for all application components |
 | `configmaps.yaml` | Configuration maps for CRM API, PostgreSQL initialization |
 | `secrets.yaml` | Secrets for PostgreSQL and CRM (credentials, API keys) |
-| `postgres.yaml` | PostgreSQL StatefulSet and Service |
-| `qdrant.yaml` | Qdrant StatefulSet and Service |
-| `n8n.yaml` | n8n Deployment and Service (embedding worker) |
-| `crm-api.yaml` | CRM API Deployment and Service |
+| `postgres.yaml` | PostgreSQL StatefulSet and Service (NodePort) |
+| `qdrant.yaml` | Qdrant StatefulSet and Service (NodePort) |
+| `n8n.yaml` | n8n Deployment and Service (NodePort) |
+| `crm-api.yaml` | CRM API Deployment and Service (NodePort) |
 | `ingress.yaml` | Ingress for external access to CRM API |
 | `psql-utility.yaml` | Utility Pod for PostgreSQL access (optional) |
+| `metallb-config.yaml` | MetalLB IP pool configuration for LoadBalancer services |
+| `services-loadbalancer.yaml` | LoadBalancer service definitions (for use with MetalLB) |
+| `nginx-ingress-controller.yaml` | Manual nginx-ingress controller installation (not via addon) |
 
 ## Deployment Order
 
@@ -42,4 +45,14 @@ When using ArgoCD, apply the Application manifest in `../argocd/applications/crm
 - **CRM API**: `crm-api:latest` (custom S2I-built image)
 
 All image versions are locked as per `.cursor/rules/images.mdc`.
+
+## Service Access Options
+
+Services are configured as **NodePort** by default for direct access without port-forward.  
+For production-like setups, you can use:
+
+- **MetalLB LoadBalancer** - Install MetalLB and use `services-loadbalancer.yaml` (see `docs/README.service-access.md`)
+- **Ingress** - Install nginx-ingress controller and use `ingress.yaml` (see `docs/README.service-access.md`)
+
+See [Service Access Guide](../docs/README.service-access.md) for detailed instructions on all access methods.
 

@@ -82,7 +82,7 @@ metadata:
   labels:
     app: n8n
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
     - name: http
       port: 5678

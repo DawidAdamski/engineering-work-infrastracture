@@ -1,0 +1,64 @@
+# LoadBalancer Service Definitions (for use with MetalLB)
+# These services use LoadBalancer type instead of NodePort
+# Apply these after installing MetalLB and configuring the IP pool
+#
+# Usage:
+#   1. Install MetalLB (see k8s/metallb-config.yaml comments)
+#   2. Configure IP pool (see k8s/metallb-config.yaml)
+#   3. Replace NodePort services with these LoadBalancer services:
+#      kubectl apply -f k8s/services-loadbalancer.yaml -n crm-rfm
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: crm-api
+  namespace: crm-rfm
+  labels:
+    app: crm-api
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app: crm-api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n
+  namespace: crm-rfm
+  labels:
+    app: n8n
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 5678
+      targetPort: 5678
+      protocol: TCP
+  selector:
+    app: n8n
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qdrant
+  namespace: crm-rfm
+  labels:
+    app: qdrant
+spec:
+  type: LoadBalancer
+  ports:
+    - name: rest
+      port: 6333
+      targetPort: 6333
+      protocol: TCP
+    - name: grpc
+      port: 6334
+      targetPort: 6334
+      protocol: TCP
+  selector:
+    app: qdrant

@@ -1,0 +1,53 @@
+# MetalLB Configuration for LoadBalancer Services
+# MetalLB provides LoadBalancer services in bare-metal Kubernetes (like Minikube)
+# without requiring port-forward or Minikube addons.
+#
+# Installation Steps:
+#   1. Install MetalLB:
+#      kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml
+#   
+#   2. Wait for MetalLB to be ready:
+#      kubectl wait --namespace metallb-system \
+#        --for=condition=ready pod \
+#        --selector=app=metallb \
+#        --timeout=90s
+#   
+#   3. Configure IP pool (this file):
+#      # First, get your Minikube IP:
+#      minikube ip
+#      # Then edit this file to use an IP range in the same subnet
+#      kubectl apply -f k8s/metallb-config.yaml
+#
+# IP Range Configuration:
+#   - Get Minikube IP: minikube ip
+#   - Use an IP range in the same subnet (e.g., if Minikube IP is 192.168.49.2, use 192.168.49.100-192.168.49.200)
+#   - For Docker driver: typically 172.17.0.x (default config below should work)
+#   - For other drivers: check the subnet and adjust accordingly
+#   - Use a small range (100 IPs) to avoid conflicts
+#
+# Example IP ranges by driver:
+#   - Docker: 172.17.0.100-172.17.0.200 (default below)
+#   - VirtualBox: 192.168.49.100-192.168.49.200
+#   - Podman: Check with 'minikube ip' and use same subnet
+
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: default-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    # IP range configured for Minikube IP: 192.168.0.40
+    # Using subnet 192.168.0.x with limited range 192.168.0.200-192.168.0.210 (11 IPs)
+    # This is sufficient for the services: crm-api, n8n, qdrant, and any future services
+    # If your Minikube IP changes, update this range to match the same subnet
+    - 192.168.0.200-192.168.0.210
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: default
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - default-pool
