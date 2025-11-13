@@ -26,12 +26,8 @@ Before deploying, ensure the following are installed on your workstation:
 minikube start --cpus=4 --memory=8192 --driver=docker
 ```
 
-Optional: enable ingress and metrics add-ons:
-
-```bash
-minikube addons enable ingress
-minikube addons enable metrics-server
-```
+**Note**: Services are configured as **NodePort** for direct access without port-forward.  
+For Ingress-based access, install nginx-ingress manually (see [Service Access Guide](README.service-access.md)).
 
 ---
 
@@ -80,20 +76,47 @@ kubectl apply -f k8s/crm-api.yaml -n crm-rfm
 
 ---
 
-## 5. Apply Ingress
+## 5. Access Services
+
+### Option A: Direct Access via NodePort (No Setup Required)
+
+All services are exposed as NodePort. Get Minikube IP and access directly:
 
 ```bash
-kubectl apply -f k8s/ingress.yaml -n crm-rfm
+# Get Minikube IP
+minikube ip
+
+# Access services
+# CRM API: http://$(minikube ip):30080
+# n8n: http://$(minikube ip):30678
+# Qdrant: http://$(minikube ip):30333
 ```
 
-Add local DNS entry (for Minikube ingress):
+### Option B: Ingress with Manual nginx-ingress
 
-```
-127.0.0.1 crm.local
-```
-Access via browser:
-- CRM API → `http://crm.local`
-- n8n UI (optional) → `http://crm.local/n8n`
+1. **Install nginx-ingress controller** (not via addon):
+   ```bash
+   kubectl apply -f k8s/nginx-ingress-controller.yaml
+   kubectl wait --namespace ingress-nginx \
+     --for=condition=ready pod \
+     --selector=app.kubernetes.io/component=controller \
+     --timeout=300s
+   ```
+
+2. **Apply Ingress**:
+   ```bash
+   kubectl apply -f k8s/ingress.yaml -n crm-rfm
+   ```
+
+3. **Add local DNS entry**:
+   ```
+   <minikube-ip>  crm.local
+   ```
+
+4. **Access via Ingress**:
+   - CRM API → `http://crm.local` or `http://$(minikube ip):30000`
+
+See [Service Access Guide](README.service-access.md) for detailed instructions.
 
 ---
 
@@ -121,12 +144,22 @@ crm-api-deployment-6fd8cfbb7c-xyz12  1/1   Running   0   30s
 kubectl get svc -n crm-rfm
 ```
 
-### Port-forward for Local Testing (Optional)
+### Access Services
+
+Services are accessible via NodePort (no port-forward needed):
 
 ```bash
-kubectl port-forward svc/crm-api 8000:8000 -n crm-rfm
-kubectl port-forward svc/n8n 5678:5678 -n crm-rfm
+# CRM API
+curl http://$(minikube ip):30080/health
+
+# n8n UI
+open http://$(minikube ip):30678
+
+# Qdrant
+curl http://$(minikube ip):30333/collections
 ```
+
+See [Service Access Guide](README.service-access.md) for more details.
 
 ---
 
@@ -195,7 +228,8 @@ minikube delete
 | Issue | Possible Cause | Fix |
 |:--|:--|:--|
 | Pod stuck in CrashLoopBackOff | ConfigMap or Secret missing | Check `kubectl describe pod` |
-| No access to crm.local | Ingress not enabled | Run `minikube addons enable ingress` |
+| Cannot access services via NodePort | Minikube not running or firewall blocking | Check `minikube status`, verify firewall rules |
+| Ingress not working | nginx-ingress not installed or DNS not configured | Install nginx-ingress, check `/etc/hosts` entry |
 | Embeddings not created | OpenAI key invalid or network blocked | Check n8n logs for API errors |
 | Qdrant empty | Workflow not triggered | Run n8n manually via its UI |
 
