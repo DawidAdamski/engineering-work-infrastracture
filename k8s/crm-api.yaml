@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: crm-api
-          image: crm-api:latest
+          image: anihilat/crm-api:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000

@@ -88,7 +88,7 @@ POST /collections/customers/points
 
 ## Querying Similar Customers
 
-CRM API can query Qdrant to find customers with similar embeddings:
+**n8n workflows** query Qdrant to find customers with similar embeddings (on behalf of CRM API):
 
 ```json
 POST /collections/customers/points/search
@@ -110,14 +110,20 @@ Response example:
 }
 ```
 
+**Note:** CRM API does not query Qdrant directly. Instead:
+1. CRM API receives a similarity search request
+2. CRM API calls an n8n webhook/API endpoint
+3. n8n workflow queries Qdrant and returns results
+4. CRM API formats and returns the response to the client
+
 ---
 
 ## Integration with Other Components
 
 | Component | Interaction |
 |:--|:--|
-| n8n workflow | Creates or updates points in Qdrant using embeddings from OpenAI. |
-| CRM API | Reads vectors and performs similarity queries for segmentation or recommendations. |
+| n8n workflow | Creates or updates points in Qdrant using embeddings from OpenAI. Also handles similarity queries on behalf of CRM API. |
+| CRM API | **Does not connect directly to Qdrant.** Instead, CRM API calls n8n workflows which query Qdrant for similarity search. |
 | PostgreSQL | Indirect relationship — Qdrant stores references to PostgreSQL customer IDs. |
 
 ---

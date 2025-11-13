@@ -92,39 +92,25 @@ All ArgoCD components use version `v3.1.9` for compatibility.
 
 ## Application Build Images
 
-### CRM API Base Image (S2I)
-
-| Property | Value |
-|:--|:--|
-| **Image** | `registry.access.redhat.com/ubi10/python-311` |
-| **Version** | `latest` |
-| **Description** | Red Hat Universal Base Image 10 with Python 3.11 for Source-to-Image builds |
-| **Source** | [Red Hat Container Catalog](https://catalog.redhat.com/software/containers/) / [Docker Hub - redhat/ubi10](https://hub.docker.com/r/redhat/ubi10) |
-| **Purpose** | Base image for building CRM API container via S2I |
-
-**Note:** 
-- Uses Red Hat UBI10 (Universal Base Image 10) with Python 3.11.
-- Latest tag should be used or specific version tag checked on [Docker Hub](https://hub.docker.com/r/redhat/ubi10).
-- This image is used in the S2I build process to create the `crm-api` application image.
-- CRM API final image is custom-built and tagged separately.
-
----
-
 ### CRM API Application Image
 
 | Property | Value |
 |:--|:--|
-| **Image** | `crm-api` |
+| **Image** | `anihilat/crm-api` |
 | **Version** | Custom (built from source) |
-| **Description** | Custom CRM API application built using Source-to-Image (S2I) |
-| **Base Image** | `registry.access.redhat.com/ubi10/python-311:latest` |
+| **Description** | Custom CRM API application built using standard Docker build process |
+| **Source** | [Docker Hub - anihilat/crm-api](https://hub.docker.com/r/anihilat/crm-api) |
+| **Build Method** | Standard Docker build (Dockerfile) |
 | **Source Repository** | [engineering-work-crm](https://github.com/DawidAdamski/engineering-work-crm) |
 | **Namespace** | `crm-rfm` |
 
 **Note:** 
-- This image is built using S2I from the CRM application source code.
+- This image is available on Docker Hub at `anihilat/crm-api`.
+- Built using standard Docker build from the CRM application source code.
+- Build command: `docker build -t anihilat/crm-api:<version> .`
 - Version tagging should follow semantic versioning (e.g., `v1.0.0`, `v1.1.0`).
-- **Never use `latest` tag** — always build and tag with specific versions.
+- **Never use `latest` tag** in production — always build and tag with specific versions.
+- Can be pulled from Docker Hub: `docker pull anihilat/crm-api:<version>`
 
 ---
 

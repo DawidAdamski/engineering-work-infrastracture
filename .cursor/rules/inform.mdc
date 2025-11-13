@@ -26,7 +26,7 @@ This repo **does not include** CRM business logic — only its backend infrastru
 - **PostgreSQL** – stores CRM entities and supports classical RFM (Recency, Frequency, Monetary) calculations.  
 - **Qdrant** – vector database for embeddings and similarity search.  
 - **n8n** – acts as the embedding worker, generating vectors from customer data via OpenAI or compatible API.  
-- **CRM API (external)** – S2I-built service connected via internal DNS (`crm-api.crm-rfm.svc.cluster.local`).  
+- **CRM API (external)** – Docker-built service connected via internal DNS (`crm-api.crm-rfm.svc.cluster.local`).  
 - **Kubernetes Resources** – namespace, PVCs, Secrets, ConfigMaps, and Ingress for deployment.
 
 # Expected Behavior
@@ -55,7 +55,7 @@ Infrastructure here will be used to:
 1. Start Minikube and create the namespace `crm-rfm`.
 2. Deploy ArgoCD for GitOps-based deployment management.
 3. Apply ConfigMaps, Secrets, and PVCs.
-4. Deploy PostgreSQL, Qdrant, n8n, and CRM API (S2I-built image) via ArgoCD.
+4. Deploy PostgreSQL, Qdrant, n8n, and CRM API (Docker-built image) via ArgoCD.
 5. Expose API via Ingress (`crm.local`).
 6. Run tests to validate integration and performance.
 
@@ -66,4 +66,4 @@ Infrastructure here will be used to:
 - Focus on clarity, traceability, and deployment correctness.
 
 # Keywords
-Kubernetes, Minikube, ArgoCD, GitOps, CRM, RFM analysis, PostgreSQL, Qdrant, OpenAI, Embeddings, n8n, Source-to-Image, DevOps, AI Infrastructure, Experimentation, Cloud Native.
+Kubernetes, Minikube, ArgoCD, GitOps, CRM, RFM analysis, PostgreSQL, Qdrant, OpenAI, Embeddings, n8n, Docker, DevOps, AI Infrastructure, Experimentation, Cloud Native.
