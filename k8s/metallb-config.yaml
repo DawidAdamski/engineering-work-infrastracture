@@ -37,11 +37,11 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-    # IP range configured for Minikube IP: 192.168.0.40
-    # Using subnet 192.168.0.x with limited range 192.168.0.200-192.168.0.210 (11 IPs)
+    # IP range configured for Minikube IP: 192.168.10.x
+    # Using subnet 192.168.10.x with limited range 192.168.10.200-192.168.10.210 (11 IPs)
     # This is sufficient for the services: crm-api, n8n, qdrant, and any future services
     # If your Minikube IP changes, update this range to match the same subnet
-    - 192.168.0.200-192.168.0.210
+    - 192.168.10.200-192.168.10.210
 ---
 apiVersion: metallb.io/v1beta1
 kind: L2Advertisement
