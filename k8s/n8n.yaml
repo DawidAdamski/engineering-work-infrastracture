@@ -81,6 +81,9 @@ metadata:
   namespace: crm-rfm
   labels:
     app: n8n
+  annotations:
+    # Assign static IP from MetalLB pool (192.168.10.200-210)
+    metallb.universe.tf/loadBalancerIPs: 192.168.10.202
 spec:
   type: LoadBalancer
   ports:
