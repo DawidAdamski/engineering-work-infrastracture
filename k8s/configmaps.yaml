@@ -8,6 +8,7 @@ metadata:
 data:
   POSTGRES_DB: crmdb
   POSTGRES_HOST: postgres.crm-rfm.svc.cluster.local
+  POSTGRES_PORT: "5432"
   N8N_URL: http://n8n.crm-rfm.svc.cluster.local:5678
   QDRANT_URL: http://qdrant.crm-rfm.svc.cluster.local:6333
   QDRANT_COLLECTION: customers
