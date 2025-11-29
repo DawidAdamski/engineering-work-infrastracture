@@ -13,6 +13,8 @@ data:
   QDRANT_COLLECTION: customers
   OPENAI_MODEL: text-embedding-3-large
   LOG_LEVEL: INFO
+  ALLOWED_HOSTS: "*"
+  DEBUG: "True"
 ---
 apiVersion: v1
 kind: ConfigMap

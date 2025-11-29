@@ -20,7 +20,7 @@ spec:
           image: anihilat/crm-api:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8000
+            - containerPort: 8080
               name: http
           envFrom:
             - configMapRef:
@@ -57,12 +57,15 @@ metadata:
   namespace: crm-rfm
   labels:
     app: crm-api
+  annotations:
+    # Assign static IP from MetalLB pool (192.168.10.200-210)
+    metallb.universe.tf/loadBalancerIPs: 192.168.10.203
 spec:
   type: LoadBalancer
   ports:
     - name: http
       port: 8000
-      targetPort: 8000
+      targetPort: 8080
       protocol: TCP
   selector:
     app: crm-api
