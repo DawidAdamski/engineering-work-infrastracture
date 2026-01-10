@@ -13,7 +13,6 @@ This directory contains all Kubernetes manifests for the CRM-RFM infrastructure.
 | `qdrant.yaml` | Qdrant StatefulSet and Service (LoadBalancer) |
 | `n8n.yaml` | n8n Deployment and Service (LoadBalancer) |
 | `crm-api.yaml` | CRM API Deployment and Service (LoadBalancer) |
-| `psql-utility.yaml` | Utility Pod for PostgreSQL access (optional) |
 | `metallb-config.yaml` | MetalLB IP pool configuration for LoadBalancer services |
 | `nginx-ingress-controller.yaml` | Manual nginx-ingress controller installation (not via addon) |
 | `argocd-loadbalancer.yaml` | LoadBalancer service for ArgoCD server (optional) |
@@ -29,7 +28,6 @@ When deploying manually (not via ArgoCD), apply manifests in this order:
 5. `qdrant.yaml`
 6. `n8n.yaml`
 7. `crm-api.yaml`
-8. `psql-utility.yaml` (optional)
 
 ## ArgoCD Deployment
 
