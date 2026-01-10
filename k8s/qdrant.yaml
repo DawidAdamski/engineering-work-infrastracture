@@ -41,11 +41,14 @@ spec:
               memory: "512Mi"
               cpu: "500m"
   volumeClaimTemplates:
-    - metadata:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
         name: qdrant-storage
       spec:
         accessModes: ["ReadWriteOnce"]
         storageClassName: standard
+        volumeMode: Filesystem
         resources:
           requests:
             storage: 5Gi

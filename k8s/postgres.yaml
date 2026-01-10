@@ -54,11 +54,14 @@ spec:
           configMap:
             name: postgres-config
   volumeClaimTemplates:
-    - metadata:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
         name: data
       spec:
         accessModes: ["ReadWriteOnce"]
         storageClassName: standard
+        volumeMode: Filesystem
         resources:
           requests:
             storage: 5Gi
