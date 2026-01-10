@@ -3,7 +3,7 @@
 # Apply this after installing MetalLB and configuring the IP pool
 #
 # Usage:
-#   1. Ensure MetalLB is installed and configured (see k8s/metallb-config.yaml)
+#   1. Ensure MetalLB is installed and configured (see k8s/manual/metallb-config.yaml)
 #   2. Apply this service:
 #      kubectl apply -f k8s/argocd-loadbalancer.yaml -n argocd
 #   3. Check the external IP:

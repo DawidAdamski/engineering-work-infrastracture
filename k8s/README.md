@@ -16,8 +16,8 @@ This directory contains all Kubernetes manifests for the CRM-RFM infrastructure.
 | `ingress.yaml` | Ingress for external access to CRM API |
 | `psql-utility.yaml` | Utility Pod for PostgreSQL access (optional) |
 | `metallb-config.yaml` | MetalLB IP pool configuration for LoadBalancer services |
-| `services-loadbalancer.yaml` | LoadBalancer service definitions (for use with MetalLB) |
 | `nginx-ingress-controller.yaml` | Manual nginx-ingress controller installation (not via addon) |
+| `argocd-loadbalancer.yaml` | LoadBalancer service for ArgoCD server (optional) |
 
 ## Deployment Order
 
@@ -37,6 +37,10 @@ When deploying manually (not via ArgoCD), apply manifests in this order:
 
 When using ArgoCD, apply the Application manifest in `../argocd/applications/crm-infrastructure-app.yaml` which will automatically deploy all manifests in this directory in the correct order.
 
+**Prerequisites:** MetalLB must be installed before applying the ArgoCD Application (see `../argocd/applications/README.md` for details).
+
+**Note:** All files in this directory are managed by ArgoCD. The Application will automatically deploy everything including MetalLB configuration.
+
 ## Image Versions
 
 - **PostgreSQL**: `postgres:18-alpine`
@@ -48,11 +52,13 @@ All image versions are locked as per `.cursor/rules/images.mdc`.
 
 ## Service Access Options
 
-Services are configured as **NodePort** by default for direct access without port-forward.  
+Services are configured as **LoadBalancer** by default (with MetalLB) for direct access without port-forward.  
 For production-like setups, you can use:
 
-- **MetalLB LoadBalancer** - Install MetalLB and use `services-loadbalancer.yaml` (see `docs/README.service-access.md`)
+- **MetalLB LoadBalancer** - Services already use LoadBalancer type (see `docs/README.service-access.md`)
 - **Ingress** - Install nginx-ingress controller and use `ingress.yaml` (see `docs/README.service-access.md`)
+
+**Note:** Alternative LoadBalancer service definitions (without static IPs) are available in `manual/services-loadbalancer.yaml` if needed.
 
 See [Service Access Guide](../docs/README.service-access.md) for detailed instructions on all access methods.
 

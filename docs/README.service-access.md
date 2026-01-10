@@ -35,11 +35,11 @@ Three approaches are available:
    ```
 
 4. **Configure MetalLB IP pool**:
-   - Edit `k8s/metallb-config.yaml` and update the IP range to match your Minikube subnet
+   - Edit `k8s/manual/metallb-config.yaml` and update the IP range to match your Minikube subnet
    - For Docker driver: typically `172.17.0.100-172.17.0.200`
    - For other drivers: use a range in the same subnet as Minikube IP
    ```bash
-   kubectl apply -f k8s/metallb-config.yaml
+   kubectl apply -f k8s/manual/metallb-config.yaml
    ```
 
 5. **Replace NodePort services with LoadBalancer services**:

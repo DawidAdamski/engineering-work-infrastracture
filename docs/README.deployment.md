@@ -89,13 +89,11 @@ kubectl apply -f k8s/crm-api.yaml -n crm-rfm
 
 ---
 
-## 5. Access Services
+## 5. Deploy with ArgoCD (Recommended)
 
-### Recommended: LoadBalancer with MetalLB (No Port-Forward Required)
+For automated GitOps-based deployment, use ArgoCD:
 
-**MetalLB** provides LoadBalancer services in bare-metal Kubernetes, making services accessible without port-forward or Minikube addons.
-
-1. **Install MetalLB**:
+1. **Install MetalLB** (one-time infrastructure setup):
    ```bash
    kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml
    kubectl wait --namespace metallb-system \
@@ -104,25 +102,28 @@ kubectl apply -f k8s/crm-api.yaml -n crm-rfm
      --timeout=90s
    ```
 
-2. **Configure IP pool**:
+2. **Apply ArgoCD Application**:
    ```bash
-   # Get Minikube IP to determine subnet
-   MINIKUBE_IP=$(minikube ip)
-   echo "Minikube IP: $MINIKUBE_IP"
+   # For network 192.168.10.x
+   kubectl apply -f argocd/applications/crm-infrastructure-app-192.168.10.x.yaml
    
-   # Edit k8s/metallb-config.yaml with IP range in same subnet
-   # Examples:
-   #   - If Minikube IP is 192.168.0.40 (Hyper-V), use 192.168.0.200-192.168.0.210
-   #   - If Minikube IP is 192.168.49.2 (VirtualBox), use 192.168.49.100-192.168.49.200
-   #   - If Minikube IP is 172.17.0.2 (Docker), use 172.17.0.100-172.17.0.200
-   
-   kubectl apply -f k8s/metallb-config.yaml
+   # OR for default network (192.168.0.x)
+   kubectl apply -f argocd/applications/crm-infrastructure-app.yaml
    ```
 
-3. **Replace NodePort services with LoadBalancer services**:
-   ```bash
-   kubectl apply -f k8s/services-loadbalancer.yaml -n crm-rfm
-   ```
+3. **That's it!** ArgoCD will automatically deploy everything:
+   - All services (PostgreSQL, Qdrant, n8n, CRM API)
+   - MetalLB configuration
+   - ConfigMaps and Secrets
+   - Ingress configuration
+
+See [ArgoCD Applications README](../argocd/applications/README.md) for more details.
+
+## 6. Access Services
+
+### LoadBalancer with MetalLB (Automatic)
+
+Services are automatically configured as **LoadBalancer** type and will receive external IPs from MetalLB:
 
 4. **Verify and access services**:
    ```bash

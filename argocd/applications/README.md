@@ -9,6 +9,23 @@ This directory contains ArgoCD Application manifests for GitOps-based deployment
 | `crm-infrastructure-app.yaml` | Default ArgoCD Application for network `192.168.0.x` | `192.168.0.x` | `main` (HEAD) |
 | `crm-infrastructure-app-192.168.10.x.yaml` | ArgoCD Application for network `192.168.10.x` | `192.168.10.x` | `network-192.168.10.x` |
 
+## Prerequisites
+
+Before applying the ArgoCD Application, ensure **MetalLB is installed** in your cluster:
+
+```bash
+# Install MetalLB (one-time setup)
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml
+
+# Wait for MetalLB to be ready
+kubectl wait --namespace metallb-system \
+  --for=condition=ready pod \
+  --selector=app=metallb \
+  --timeout=90s
+```
+
+**Why?** The Application includes MetalLB configuration (`k8s/metallb-config.yaml`), which requires MetalLB webhooks to be ready. This is a one-time infrastructure setup step.
+
 ## Network Configuration
 
 This repository supports different network configurations:
@@ -21,6 +38,33 @@ Each network configuration uses a different Git branch:
 - `network-192.168.10.x` branch: Contains MetalLB config with IP range `192.168.10.200-192.168.10.210`
 
 ## Deployment
+
+### Quick Start (Recommended)
+
+1. **Install MetalLB** (if not already installed):
+   ```bash
+   kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.15.2/config/manifests/metallb-native.yaml
+   kubectl wait --namespace metallb-system \
+     --for=condition=ready pod \
+     --selector=app=metallb \
+     --timeout=90s
+   ```
+
+2. **Apply the ArgoCD Application**:
+   ```bash
+   # For default network (192.168.0.x)
+   kubectl apply -f argocd/applications/crm-infrastructure-app.yaml
+   
+   # OR for network 192.168.10.x
+   kubectl apply -f argocd/applications/crm-infrastructure-app-192.168.10.x.yaml
+   ```
+
+3. **That's it!** ArgoCD will automatically deploy all infrastructure:
+   - Namespace `crm-rfm`
+   - ConfigMaps and Secrets
+   - PostgreSQL, Qdrant, n8n, CRM API
+   - MetalLB configuration
+   - Ingress configuration
 
 ### Using Default Configuration (192.168.0.x)
 
@@ -71,14 +115,16 @@ The `crm-infrastructure` application:
 - Uses automated sync with self-healing
 - Creates the namespace automatically if it doesn't exist
 - **Network-specific**: Points to different Git branches based on network configuration
+- **Manages everything**: All resources including MetalLB configuration are managed by ArgoCD
 
 ## Important Notes
 
-⚠️ **Only one Application can be active at a time** - both files define the same Application name (`crm-infrastructure`). Use only one configuration file at a time.
+⚠️ **MetalLB must be installed before applying the Application** - This is a one-time infrastructure setup. The Application includes MetalLB configuration that requires MetalLB webhooks to be ready.
+
+⚠️ **Only one Application can be active at a time** - Both files define the same Application name (`crm-infrastructure`). Use only one configuration file at a time.
 
 ⚠️ **Branch must exist in Git** - Before using `crm-infrastructure-app-192.168.10.x.yaml`, ensure the `network-192.168.10.x` branch exists and contains the correct MetalLB configuration.
 
 ## Repository Configuration
 
 Make sure to update the `repoURL` and `targetRevision` in the Application manifest to match your Git repository URL and branch.
-
