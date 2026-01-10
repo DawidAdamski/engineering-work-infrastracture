@@ -8,6 +8,11 @@ metadata:
 spec:
   serviceName: postgres
   replicas: 1
+  podManagementPolicy: OrderedReady
+  revisionHistoryLimit: 10
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
   selector:
     matchLabels:
       app: postgres
