@@ -10,10 +10,9 @@ This directory contains all Kubernetes manifests for the CRM-RFM infrastructure.
 | `configmaps.yaml` | Configuration maps for CRM API, PostgreSQL initialization |
 | `secrets.yaml` | Secrets for PostgreSQL and CRM (credentials, API keys) |
 | `postgres.yaml` | PostgreSQL StatefulSet and Service (NodePort) |
-| `qdrant.yaml` | Qdrant StatefulSet and Service (NodePort) |
-| `n8n.yaml` | n8n Deployment and Service (NodePort) |
-| `crm-api.yaml` | CRM API Deployment and Service (NodePort) |
-| `ingress.yaml` | Ingress for external access to CRM API |
+| `qdrant.yaml` | Qdrant StatefulSet and Service (LoadBalancer) |
+| `n8n.yaml` | n8n Deployment and Service (LoadBalancer) |
+| `crm-api.yaml` | CRM API Deployment and Service (LoadBalancer) |
 | `psql-utility.yaml` | Utility Pod for PostgreSQL access (optional) |
 | `metallb-config.yaml` | MetalLB IP pool configuration for LoadBalancer services |
 | `nginx-ingress-controller.yaml` | Manual nginx-ingress controller installation (not via addon) |
@@ -30,8 +29,7 @@ When deploying manually (not via ArgoCD), apply manifests in this order:
 5. `qdrant.yaml`
 6. `n8n.yaml`
 7. `crm-api.yaml`
-8. `ingress.yaml`
-9. `psql-utility.yaml` (optional)
+8. `psql-utility.yaml` (optional)
 
 ## ArgoCD Deployment
 
@@ -52,13 +50,7 @@ All image versions are locked as per `.cursor/rules/images.mdc`.
 
 ## Service Access Options
 
-Services are configured as **LoadBalancer** by default (with MetalLB) for direct access without port-forward.  
-For production-like setups, you can use:
+Services are configured as **LoadBalancer** by default (with MetalLB) for direct access without port-forward. All services (qdrant, n8n, crm-api) use LoadBalancer type with static IPs assigned from MetalLB pool.
 
-- **MetalLB LoadBalancer** - Services already use LoadBalancer type (see `docs/README.service-access.md`)
-- **Ingress** - Install nginx-ingress controller and use `ingress.yaml` (see `docs/README.service-access.md`)
-
-**Note:** Alternative LoadBalancer service definitions (without static IPs) are available in `manual/services-loadbalancer.yaml` if needed.
-
-See [Service Access Guide](../docs/README.service-access.md) for detailed instructions on all access methods.
+See [Service Access Guide](../docs/README.service-access.md) for detailed instructions.
 
