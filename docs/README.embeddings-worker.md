@@ -142,12 +142,12 @@ kubectl get svc n8n -n crm-rfm
 
 # Example output:
 # NAME   TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)
-# n8n    LoadBalancer   10.104.239.39   192.168.0.201   5678:30569/TCP
+# n8n    LoadBalancer   10.104.239.39   192.168.10.201   5678:30569/TCP
 ```
 
 **Access n8n:**
 - **URL:** `http://<EXTERNAL-IP>:5678`
-- **Example:** `http://192.168.0.201:5678`
+- **Example:** `http://192.168.10.201:5678`
 
 **Note:** LoadBalancer IPs may not be accessible from all networks. If the external IP doesn't work, use port-forward instead.
 
@@ -183,7 +183,7 @@ http://n8n.crm-rfm.svc.cluster.local:5678
 **Default behavior:** n8n does **not require authentication** by default on first access.
 
 **First-time access:**
-1. Open the n8n URL in your browser (e.g., `http://192.168.0.201:5678`)
+1. Open the n8n URL in your browser (e.g., `http://192.168.10.201:5678`)
 2. You will be prompted to **create your first user account**
 3. Enter your email and password to create the admin account
 4. After creating the account, you'll be logged in automatically

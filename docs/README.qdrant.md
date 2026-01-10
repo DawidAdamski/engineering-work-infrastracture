@@ -161,7 +161,7 @@ kubectl get svc qdrant -n crm-rfm
 
 # Example output:
 # NAME     TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)
-# qdrant   LoadBalancer   10.99.183.220   192.168.0.202   6333:31746/TCP,6334:30812/TCP
+# qdrant   LoadBalancer   10.99.183.220   192.168.10.202   6333:31746/TCP,6334:30812/TCP
 ```
 
 **Access Qdrant:**
@@ -172,10 +172,10 @@ kubectl get svc qdrant -n crm-rfm
 **Example:**
 ```bash
 # Open Qdrant dashboard in browser
-open http://192.168.0.202:6333/dashboard
+open http://192.168.10.202:6333/dashboard
 
 # Or access via curl
-curl http://192.168.0.202:6333/collections
+curl http://192.168.10.202:6333/collections
 ```
 
 ### Method 2: Port-Forward (Local Access)

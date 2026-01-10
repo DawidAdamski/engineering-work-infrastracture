@@ -16,7 +16,7 @@
 #      # First, get your Minikube IP:
 #      minikube ip
 #      # Then edit this file to use an IP range in the same subnet
-#      kubectl apply -f k8s/metallb-config.yaml
+#      kubectl apply -f k8s/manual/metallb-config.yaml
 #
 # IP Range Configuration:
 #   - Get Minikube IP: minikube ip

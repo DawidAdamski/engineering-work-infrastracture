@@ -125,12 +125,12 @@ kubectl get svc argocd-server -n argocd
 
 # Example output:
 # NAME            TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)
-# argocd-server   LoadBalancer   10.97.133.222   192.168.0.203   80:30080/TCP,443:30443/TCP
+# argocd-server   LoadBalancer   10.97.133.222   192.168.10.203   80:30080/TCP,443:30443/TCP
 ```
 
 **Access ArgoCD:**
 - **HTTPS:** `https://<EXTERNAL-IP>` (or `http://<EXTERNAL-IP>` if using HTTP)
-- **Example:** `https://192.168.0.203`
+- **Example:** `https://192.168.10.203`
 
 **Note:** ArgoCD may require HTTPS. If you get certificate errors, you can:
 - Accept the self-signed certificate in your browser
