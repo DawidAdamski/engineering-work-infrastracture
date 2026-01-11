@@ -16,6 +16,7 @@ data:
   LOG_LEVEL: INFO
   ALLOWED_HOSTS: "*"
   DEBUG: "True"
+  SERVE_STATIC: "true"
 ---
 apiVersion: v1
 kind: ConfigMap
