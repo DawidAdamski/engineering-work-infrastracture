@@ -66,13 +66,46 @@ spec:
               value: "5678"
             - name: N8N_PROTOCOL
               value: http
+            # Increase body size limit (default is 16MB, increase to 50MB for large batches)
+            # Value is in MB (not bytes) according to n8n documentation
+            - name: N8N_PAYLOAD_SIZE_MAX
+              value: "50"  # 50MB (value is in MB, not bytes)
+            # Increase Node.js heap size to prevent out of memory errors
+            # Node has 4Gi RAM, so we use 3Gi for pod (leave 1Gi for system)
+            # Heap size should be less than memory limit
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=2560"  # 2.5GB heap (memory limit is 3Gi)
+            # Enable persistent storage for workflows
+            # n8n stores data in /home/node/.n8n by default
+            - name: N8N_USER_FOLDER
+              value: /home/node/.n8n
+          volumeMounts:
+            - name: n8n-storage
+              mountPath: /home/node/.n8n
           resources:
             requests:
-              memory: "2Gi"
+              memory: "3Gi"  # Max 3Gi (node has 4Gi total, leave 1Gi for system)
               cpu: "1000m"
             limits:
-              memory: "2Gi"
-              cpu: "1000m"
+              memory: "3Gi"  # Max 3Gi (node has 4Gi total)
+              cpu: "2000m"   # Increased from 1000m for better performance
+      volumes:
+        - name: n8n-storage
+          persistentVolumeClaim:
+            claimName: n8n-storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: n8n-storage
+  namespace: crm-rfm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 10Gi  # 10GB for workflows and data
 ---
 apiVersion: v1
 kind: Service
